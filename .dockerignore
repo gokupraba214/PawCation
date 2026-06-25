@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.local
+.env.production
+vendor
+node_modules
+tests
+builds
+writable/cache/*
+writable/logs/*
+writable/session/*
+writable/uploads/*
+.DS_Store
+Thumbs.db
