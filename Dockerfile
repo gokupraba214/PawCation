@@ -13,9 +13,6 @@ RUN apt-get update && apt-get install -y \
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd intl
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
 # Set working directory
 WORKDIR /var/www/html
 
@@ -35,8 +32,24 @@ COPY . .
 RUN chown -R www-data:www-data /var/www/html/writable \
     && chmod -R 775 /var/www/html/writable
 
-# Configure Apache
-RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+# Configure Apache to serve CodeIgniter 4 from public directory
+RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf && \
+    sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf && \
+    a2enmod rewrite
+
+# Create Apache directory configuration
+RUN echo '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+    <IfModule mod_rewrite.c>\n\
+        RewriteEngine On\n\
+        RewriteCond %{REQUEST_FILENAME} !-f\n\
+        RewriteCond %{REQUEST_FILENAME} !-d\n\
+        RewriteRule ^ index.php [QSA,L]\n\
+    </IfModule>\n\
+</Directory>' > /etc/apache2/conf-available/pawcation.conf && \
+    a2enconf pawcation
 
 # Expose port 80
 EXPOSE 80
